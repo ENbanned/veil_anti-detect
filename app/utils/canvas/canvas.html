@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Генерация Canvas Fingerprint DataURL</title>
+</head>
+<body>
+<canvas id="fpCanvas" width="600" height="100"></canvas>
+<script>
+
+  function generateRandomColor() {
+
+    const arr = new Uint8Array(3);
+    crypto.getRandomValues(arr);
+
+    return '#' + Array.from(arr, byte => byte.toString(16).padStart(2, '0')).join('');
+  }
+
+
+  function randomFloat(min, max) {
+    return min + Math.random() * (max - min);
+  }
+
+
+  function drawRandomCircles(ctx, count = 5) {
+    for (let i = 0; i < count; i++) {
+      ctx.beginPath();
+      ctx.fillStyle = generateRandomColor();
+      const x = randomFloat(0, ctx.canvas.width);
+      const y = randomFloat(0, ctx.canvas.height);
+      const r = randomFloat(10, 50);
+      ctx.arc(x, y, r, 0, 2 * Math.PI);
+      ctx.fill();
+    }
+  }
+
+
+  function drawRandomText(ctx, text) {
+    ctx.font = `${Math.floor(randomFloat(14, 24))}px Arial`;
+    ctx.fillStyle = generateRandomColor();
+    const x = randomFloat(0, ctx.canvas.width - 100);
+    const y = randomFloat(20, ctx.canvas.height - 10);
+    ctx.fillText(text, x, y);
+  }
+
+
+  function generateFingerprint() {
+    const canvas = document.getElementById('fpCanvas');
+    const ctx = canvas.getContext('2d');
+
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+
+    ctx.fillStyle = generateRandomColor();
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+
+    drawRandomCircles(ctx, 5);
+
+
+    const uniqueID = crypto.randomUUID();
+    const timeStamp = Date.now();
+
+
+    drawRandomText(ctx, "Fingerprint: " + uniqueID);
+    drawRandomText(ctx, "Timestamp: " + timeStamp);
+
+
+    ctx.save();
+    ctx.translate(randomFloat(0, 50), randomFloat(0, 50));
+    ctx.rotate(randomFloat(0, 2 * Math.PI));
+    ctx.fillStyle = generateRandomColor();
+    ctx.fillRect(0, 0, 60, 60);
+    ctx.restore();
+
+
+    return canvas.toDataURL();
+  }
+
+
+  function generateMultipleFingerprints(count) {
+    const fingerprints = new Set();
+    for (let i = 0; i < count; i++) {
+      fingerprints.add(generateFingerprint());
+    }
+    return fingerprints;
+  }
+
+
+  const fps = generateMultipleFingerprints(100);
+  console.log(fps);
+  console.log(`Количество уникальных dataURL: ${fps.size}`);
+
+
+  const container = document.createElement('div');
+  let index = 1;
+  fps.forEach(fp => {
+    const p = document.createElement('p');
+    p.textContent = `Fingerprint ${index}: ${fp.substring(0, 50)}...`;
+    index++;
+    container.appendChild(p);
+  });
+  document.body.appendChild(container);
+</script>
+</body>
+</html>
