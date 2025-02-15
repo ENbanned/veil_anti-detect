@@ -317,17 +317,28 @@
                 enumerable: true,
                 configurable: true,
                 writable: false
-            },
-            'getUserMedia': {
-                value: function() {
-                    return Promise.reject(new Error('NotAllowedError'));
-                },
-                enumerable: true,
-                configurable: true,
-                writable: false
             }
         });
+
+        try {
+            const descriptor = Object.getOwnPropertyDescriptor(navigator.mediaDevices, 'getUserMedia');
+            if (descriptor && descriptor.configurable) {
+                Object.defineProperty(navigator.mediaDevices, 'getUserMedia', {
+                    value: function() {
+                        return Promise.reject(new Error('NotAllowedError'));
+                    },
+                    enumerable: true,
+                    configurable: true,
+                    writable: false
+                });
+            } else {
+                console.warn("Нельзя переопределить getUserMedia – свойство не конфигурируемое.");
+            }
+        } catch (error) {
+            console.error("Ошибка при переопределении getUserMedia:", error);
+        }
     }
+
 
     // ========== 8) RAM и CPU ==========
     console.log("Overriding navigator hardware properties (RAM/CPU)");
